@@ -13,6 +13,16 @@ var ban = document.getElementById("field")
 
 
 //取得したテーブルに盤面を作成
+function ban_new() {
+    for (var x = 0; x < 8; x++){
+        var tr = document.createElement("tr")
+        ban.appendChild(tr)
+        for (var y = 0; y < 8; y++){
+            var td = document.createElement("td")
+            tr.appendChild(td)
+        }
+    }
+}
 ban_new()
 
 //盤面の初期化
@@ -35,16 +45,16 @@ for (var x = 0; x < 8; x++){
 
 
 //テーブルで盤面を作成する処理
-function ban_new() {
-    for (var x = 0; x < 8; x++){
-        var tr = document.createElement("tr")
-        ban.appendChild(tr)
-        for (var y = 0; y < 8; y++){
-            var td = document.createElement("td")
-            tr.appendChild(td)
-        }
-    }
-}
+// function ban_new() {
+//     for (var x = 0; x < 8; x++){
+//         var tr = document.createElement("tr")
+//         ban.appendChild(tr)
+//         for (var y = 0; y < 8; y++){
+//             var td = document.createElement("td")
+//             tr.appendChild(td)
+//         }
+//     }
+// }
 
 
 //ここまで書いたら緑色の盤面が表示される
@@ -58,10 +68,12 @@ function ban_init () {
         }
     }
     //初期状態では真ん中に白黒を配列
-    ban_ar[3][3] = -1
+    ban_ar[3][3] = 2
     ban_ar[4][3] = 1
     ban_ar[3][4] = 1
-    ban_ar[4][4] = -1
+    ban_ar[4][4] = 2
+    ban_ar[5][4] = 3
+    ban_ar[4][5] = 3
     ban_set()
     
     //ターンも初期化
@@ -89,8 +101,11 @@ function ban_set() {
                 case 0:
                     stone = ""
                     break;
-                case -1:
+                case 2:
                     stone = "○"
+                    break;
+                case 3:
+                    stone = "★"
                     break;
                 case 1:
                     stone = "●"
@@ -111,7 +126,8 @@ function cheng_turn() {
         return
     }
     //ターンを変更
-    turn = turn * -1
+    turn = (turn + 1) % 3+1
+    console.log(turn)
     //ターンを交代して、置けるところがあるかを確認する
     //現状の配置をバックアップ
     var ban_bak = new Array(8)
@@ -127,6 +143,7 @@ function cheng_turn() {
     //ここまでバックアップのための記述
     var white_cnt = 0
     var black_cnt = 0
+    var star_cnt=0
     for (var x = 0; x < 8; x++) {
         for (var y = 0; y < 8; y++) {
             //空白マスのみおけるのでチェック
@@ -142,7 +159,10 @@ function cheng_turn() {
                         }
                     }
                     break;
-                case -1://マスに白石があるという事
+                case 3:
+                    star_cnt = star_cnt + 1
+                    break;
+                case 2://マスに白石があるという事
                     white_cnt = white_cnt + 1
                     break
                 case 1:
@@ -152,43 +172,56 @@ function cheng_turn() {
         }
     }
     //白と黒の合計が8*8=64の場合は終了
-    if (white_cnt + black_cnt == 64 || white_cnt == 0 || black_cnt == 0) {
+    if (white_cnt + black_cnt+star_cnt == 64 ||star_cnt==0 || white_cnt == 0 || black_cnt == 0) {
         if (white_cnt == black_cnt) {
             alert("引き分けです")
-        } else if (white_cnt > black_cnt) {
-            alert("勝負は黒：" + black_cnt + "対、白：" + white_cnt + "で白の勝ち")
-        } else {
+        } else if (star_cnt==0) {
+            alert("白の負け")
+        } else if (black_cnt==0) {
+            alert("黒の負け")
+        }
+             else if (white_cnt==0) {
+            alert("白の負け")
+        }
+        else {
             alert("勝負は黒:" + black_cnt + "対、白：" + white_cnt + "で黒の勝ちです")
         }
     } else {
         //置ける場所がない場合はターンを相手に戻す
         if (check_reverse_cnt == 0) {
             switch (turn) {
-                case -1:
-                    alert("白のおける場所がありません。続けて黒の番になります")
-                    turn = turn * -1
+                case 2:
+                    alert("白のおける場所がありません。続けて星の番になります")
+                    turn = (turn + 1) % 3+1
                     break;
                 case 1:
                     alert("黒のおける場所がありません。続けて白の番となります。")
-                    turn = turn * -1
+                    turn = (turn + 1) % 3+1
+                    break;
+                case 3:
+                    alert("星のおける場所がありません。続けて白の番となります。")
+                    turn = (turn + 1) % 3+1
                     break;
             }
         }
     }
     //ターンを表示
     switch (turn) {
-        case -1:
+        case 2:
             tarn_msg.textContent = "白の番です";
             break;
         case 1:
             tarn_msg.textContent = "黒の番です";
+            break;
+         case 3:
+            tarn_msg.textContent = "星の番です";
             break;
     }
     // 独自機能
 
     // 途中経過確認
     var progress = document.getElementById("progress")
-    progress.textContent = "白" + white_cnt + "黒" + black_cnt
+    progress.textContent = "白" + white_cnt + "黒" + black_cnt+"星"+star_cnt
     //     function btn_progress(){
     // alert("白" + white_cnt+ "黒"+black_cnt)
     // }ボツ
@@ -239,11 +272,14 @@ function cheng_turn() {
     //                 tarn_msg.textContent = "黒の勝ち";
     //             break
     // }
-    if (ban_ar[2][2] == 1) {
-        alert("白")
-    } else if(ban_ar[2][2] == -1) {
-   alert("黒")
-    }
+    // if文を使った特定のマスに石を置いた時点で勝敗決着
+    // if (ban_ar[2][2] == -1) {
+    //     alert("独自ルールにより白")
+    //     tarn_msg.textContent = "白の勝ち";
+    // } else if(ban_ar[2][2] == 1) {
+    //     alert("独自ルールにより黒")
+    //     tarn_msg.textContent = "黒の勝ち";
+    // }
     // 特定のマスに石を置いた時点で勝敗決着end
 };
 
@@ -299,7 +335,7 @@ function line_reverse(row_index, cell_index, add_x, add_y) {
             break;
         }
         //上記以外は相手の石であるので、裏返して裏返した件数の加算
-        ban_ar[xx][yy] = ban_ar[xx][yy] * -1
+        ban_ar[xx][yy] = turn
         line_reverse_cnt++
     }
     //裏返しを行ったが移動先に自分の石がなかった場合は元に戻す
@@ -329,8 +365,10 @@ function line_reverse(row_index, cell_index, add_x, add_y) {
 // 途中経過 pタグに表示
 var white_cnt = 2
 var black_cnt = 2
+var star_cnt = 2
 var progress = document.getElementById("progress")
-progress.textContent="白" + white_cnt+ "黒"+black_cnt
+progress.textContent = "白" + white_cnt + "黒" + black_cnt+"星"+star_cnt
+
 
 
 // 途中経過をポップアップに表示
